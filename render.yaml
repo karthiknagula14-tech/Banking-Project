@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: banking-chatbot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MODEL
+        value: gemini-2.5-flash
+      - key: EMERGENCY_NUMBER
+        value: "011 200 2000"
