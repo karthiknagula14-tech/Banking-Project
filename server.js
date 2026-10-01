@@ -173,7 +173,9 @@ app.post("/api/chat", async (req, res) => {
 
   const started = Date.now();
 
-  try {
+  // Google's free tier returns 503 when the model is busy. Retry twice
+  // with a short wait before giving up — these blips are usually brief.
+  async function callGemini(attempt = 1) {
     const r = await fetch(`${BASE}/models/${MODEL}:generateContent`, {
       method: "POST",
       signal: abort.signal,
@@ -195,12 +197,25 @@ app.post("/api/chat", async (req, res) => {
       })
     });
 
+    if ((r.status === 503 || r.status === 429) && attempt < 3) {
+      const wait = attempt * 1500;
+      console.log(`Model busy (${r.status}), retrying in ${wait}ms...`);
+      await new Promise(done => setTimeout(done, wait));
+      return callGemini(attempt + 1);
+    }
+
+    return r;
+  }
+
+  try {
+    const r = await callGemini();
     const data = await r.json();
 
     if (!r.ok) {
       const msg = data?.error?.message || "";
       console.error("Gemini returned", r.status, msg);
-      if (r.status === 429) send({ error: "rate_limited" });
+      if (r.status === 503) send({ error: "busy" });
+      else if (r.status === 429) send({ error: "rate_limited" });
       else if (r.status === 400 && /API key/i.test(msg)) send({ error: "bad_key" });
       else if (r.status === 404) send({ error: "model_missing" });
       else send({ error: "upstream_error" });
