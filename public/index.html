@@ -191,7 +191,11 @@
     stopBtn.hidden = !on;
   }
   function copyFor(code) {
+    if (code === "busy") return "The service is busy right now. Please try again in a moment.";
     if (code === "rate_limited") return "Too many messages right now. Wait a minute, then try again.";
+    if (code === "bad_key") return "The server's API key is not valid. Check the .env file.";
+    if (code === "model_missing") return "That model name is wrong. Check the server terminal for valid ones.";
+    if (code === "refused") return "That one could not be answered. Try asking it a different way.";
     return "Something went wrong. Try sending it again.";
   }
 
@@ -201,7 +205,7 @@
     addTurn("user", text);
     save();
 
-    var body = addTurn("assistant", "Thinking…");
+    var body = addTurn("assistant", "Thinking… (a local model can take 10 to 30 seconds)");
     body.classList.add("pending");
     toBottom();
     setBusy(true);
@@ -269,7 +273,7 @@
         note(body, err.name === "AbortError" ? "Stopped." : "The answer was interrupted.");
       } else {
         turnsEl.removeChild(body.parentNode);
-        setStatus(err.name === "AbortError" ? "Stopped." : "Could not reach the server. Is it running?", err.name !== "AbortError");
+        setStatus(err.name === "AbortError" ? "Stopped." : "Cannot reach the server. Is it running?", err.name !== "AbortError");
       }
       setBusy(false);
     });
