@@ -205,7 +205,7 @@
     addTurn("user", text);
     save();
 
-    var body = addTurn("assistant", "Thinking… (a local model can take 10 to 30 seconds)");
+    var body = addTurn("assistant", "Thinking…");
     body.classList.add("pending");
     toBottom();
     setBusy(true);
